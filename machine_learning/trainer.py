@@ -38,12 +38,12 @@ class ModelTrainer():
             num_col=self.x_train.select_dtypes(include=["int64","float64"]).columns.tolist()
             cat_col=self.x_train.select_dtypes(include=["object"]).columns.tolist()
             num_feature=Pipeline(steps=[
-                "impute",SimpleImputer(strategy="median"),
-                "scaler",StandardScaler()
+                ("impute",SimpleImputer(strategy="median")),
+                ("scaler",StandardScaler())
             ])
             cat_feature=Pipeline(steps=[
-                "impute",SimpleImputer(strategy="mean"),
-                "encoder",OneHotEncoder(handle_unknown="ignore")
+                ("impute",SimpleImputer(strategy="most_frequent")),
+                ("encoder",OneHotEncoder(handle_unknown="ignore"))
             ])
             self.preprocessor=ColumnTransformer(transformers=[
                 ("num",num_feature,num_col),
@@ -54,6 +54,7 @@ class ModelTrainer():
     def use_data_train(self):
         self.x_train_transformed=self.preprocessor.fit_transform(self.x_train)
         self.x_test_transformed=self.preprocessor.transform(self.x_test)
+        os.makedirs(self.model_dir, exist_ok=True)
         for name,model in self.models.items():
             model.fit(self.x_train_transformed,self.y_train)
             filename=name.replace(" ","_") + ".pkl"
