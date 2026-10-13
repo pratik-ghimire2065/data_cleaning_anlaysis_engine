@@ -10,6 +10,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 import os
 import pandas as pd
+import numpy as np
+
 class ModelTrainer():
     def __init__(self,data_path:str,target_col:str,model_dir:str):
         self.data_path=data_path
@@ -24,6 +26,7 @@ class ModelTrainer():
         self.x_train,self.x_test,self.y_train,self.y_test=[None] *4
         self.preprocessor=None
     def prepare_data(self):
+        train_model=None
         if os.path.exists(self.data_path):
             df=pd.read_csv(self.data_path,index_col=False)
             x=df.drop(columns=[self.target_column],axis=1)
@@ -52,13 +55,19 @@ class ModelTrainer():
         else:
             raise FileNotFoundError("File didn't found ")
     def use_data_train(self):
-        self.x_train_transformed=self.preprocessor.fit_transform(self.x_train)
-        self.x_test_transformed=self.preprocessor.transform(self.x_test)
+        train_model={}
+        model_path={}
         os.makedirs(self.model_dir, exist_ok=True)
         for name,model in self.models.items():
-            model.fit(self.x_train_transformed,self.y_train)
-            filename=name.replace(" ","_") + ".pkl"
-            joblib.dump(model ,os.path.join(self.model_dir,filename))   
-
-
-        
+          pipe=Pipeline([
+              ("preprocessor",self.preprocessor),
+              ("model",model)
+              ])
+          pipe.fit(self.x_train,self.y_train)
+          filename=name.replace(" ","_") + ".pkl"
+          model_path[name]=filename
+          joblib.dump(pipe ,os.path.join(self.model_dir,filename))
+          train_model[name]=pipe
+        print("Done everything model saved to folder",self.model_dir)
+        print(model_path)
+        return train_model,self.y_test,self.x_test
