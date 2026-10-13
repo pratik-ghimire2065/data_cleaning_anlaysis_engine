@@ -44,4 +44,4 @@ class Imageclassifier():
         verbose=1,
         validation_data=(self.test_images,self.test_images)
     )
-    print("cnn model training complete let's proceed to another one model")
+    print("cnn model training complete let's proceed to another model")
